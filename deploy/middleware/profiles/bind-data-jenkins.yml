@@ -1,0 +1,11 @@
+# =============================================================================
+# bind-data-jenkins.yml — Jenkins 数据卷的宿主目录绑定覆盖
+# -----------------------------------------------------------------------------
+# 必须与 profiles/jenkins.yml 一起叠加；由 lib/compose.sh 自动追加
+# =============================================================================
+name: wisepen-middleware
+
+services:
+  jenkins:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/jenkins:/var/jenkins_home

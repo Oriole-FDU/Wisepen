@@ -1,0 +1,12 @@
+# =============================================================================
+# bind-data-search.yml — search 数据卷的宿主目录绑定覆盖
+# -----------------------------------------------------------------------------
+# 必须与 profiles/search.yml 一起叠加；由 lib/compose.sh 自动追加
+# =============================================================================
+name: wisepen-middleware
+
+services:
+  elasticsearch:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/elasticsearch/data:/usr/share/elasticsearch/data
+      - ${WISEPEN_DATA_ROOT}/elasticsearch/plugins:/usr/share/elasticsearch/plugins

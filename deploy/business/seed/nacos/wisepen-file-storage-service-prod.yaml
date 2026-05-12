@@ -1,0 +1,33 @@
+# =============================================================================
+# wisepen-file-storage-service（prod profile）
+# -----------------------------------------------------------------------------
+# 当前共享 wisepen_system 数据库（与 wisepen-system-service 同库）
+# =============================================================================
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${WISEPEN_MYSQL_HOST:${WISEPEN_INFRA_HOST:localhost}}:${WISEPEN_MYSQL_PORT:3306}/wisepen_system?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${WISEPEN_MYSQL_USER:root}
+    password: ${WISEPEN_MYSQL_PASSWORD:root}
+
+wisepen:
+  storage:
+    # ======== 基础业务配置 ========
+    default-ticket-duration: 900
+    max-small-file-size: 5242880
+    # 本地开发测试时，可以填 cpolar/ngrok 的内网穿透地址
+    api-domain: ${WISEPEN_STORAGE_API_DOMAIN:http://localhost:9080/}
+
+    # ======== 分布式垃圾回收 (GC) & 容错配置 ========
+    uploading-timeout-hours: 2
+    deleted-retention-days: 30
+    zombie-cleanup-cron: "0 0 */2 * * ?"
+    physical-gc-cron: "0 0 3 * * ?"
+
+springdoc:
+  api-docs.enabled: false
+  swagger-ui.enabled: false

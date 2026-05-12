@@ -1,0 +1,36 @@
+# APISIX Dashboard 主配置
+conf:
+  listen:
+    host: 0.0.0.0
+    port: 9000
+  etcd:
+    endpoints:
+      - etcd:2379
+    username: root
+    password: "${ETCD_ROOT_PASSWORD}"
+  log:
+    error_log:
+      level: warn
+      file_path:
+        logs/error.log
+
+authentication:
+  secret: "${APISIX_DASHBOARD_SECRET}"
+  expire_time: 604800
+  users:
+    - username: "${APISIX_DASHBOARD_USER}"
+      password: "${APISIX_DASHBOARD_PASSWORD}"
+
+plugin_attr:
+  prometheus:
+    export_addr:
+      ip: "0.0.0.0"
+      port: 9091
+
+plugins:
+  - cors
+  - prometheus
+  - opentelemetry
+  - serverless-pre-function
+  - serverless-post-function
+  - response-rewrite

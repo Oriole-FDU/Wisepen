@@ -1,0 +1,38 @@
+# =============================================================================
+# bind-data.yml — 用宿主机目录绑定挂载替换默认的 named volumes（基础层）
+# =============================================================================
+name: wisepen-middleware
+
+services:
+  mysql:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/mysql:/var/lib/mysql
+
+  redis:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/redis:/data
+
+  mongo:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/mongo:/data/db
+
+  nacos:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/nacos/logs:/home/nacos/logs
+      - ${WISEPEN_DATA_ROOT}/nacos/data:/home/nacos/data
+
+  etcd:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/etcd:/bitnami/etcd-data
+
+  kafka:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/kafka:/bitnami/kafka
+
+  qdrant:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/qdrant:/qdrant/storage
+
+  jodconverter:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/jod-fonts:/usr/share/fonts/custom

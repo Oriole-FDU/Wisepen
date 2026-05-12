@@ -1,0 +1,284 @@
+// =============================================================================
+// wisepen_chat.js.tmpl
+// -----------------------------------------------------------------------------
+// 本文件在渲染后由 mongo 容器 docker-entrypoint-initdb.d 在首启时执行
+// 
+// 本文件含三段 collection 数据：
+//   1. wisepen_model_provider_mappings   - 14 条 model→provider 映射，全部硬编码
+//                                          指向智增增的 ObjectId(69d72506dfef56e2b20fc374)
+//   2. wisepen_models                    - 14 条模型展示信息
+//   3. wisepen_providers                 - 1 条 provider，**仅在 business.env 中
+//                                          WISEPEN_LLM_PROVIDER_API_KEY 非空时插入**
+//
+// 想换 LLM provider：必须停 chat-service，进 mongo wisepen_chat 库重做整张
+// wisepen_model_provider_mappings 表（每行 provider_id 改成新 provider 的 _id），
+// 详见 deploy/business/seed/README.md。
+// =============================================================================
+
+// 显式切到 wisepen_chat 库（mongo entrypoint 默认在 admin 库下跑 .js）
+db = db.getSiblingDB('wisepen_chat');
+
+// ----------------------------
+// Collection structure for wisepen_model_provider_mappings
+// ----------------------------
+db.getCollection("wisepen_model_provider_mappings").drop();
+db.createCollection("wisepen_model_provider_mappings");
+
+// ----------------------------
+// Documents of wisepen_model_provider_mappings
+// ----------------------------
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc375"),
+    model_id: 1,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "gpt-4o-mini",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc376"),
+    model_id: 2,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "gpt-4.1-nano",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc377"),
+    model_id: 3,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "gemini-3-flash-preview",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc378"),
+    model_id: 4,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "deepseek-chat",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc379"),
+    model_id: 5,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "grok-3-mini",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc37a"),
+    model_id: 6,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "claude-haiku-4-5-20251001",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc37b"),
+    model_id: 101,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "gpt-4o",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc37c"),
+    model_id: 102,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "gpt-4.1",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc37d"),
+    model_id: 103,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "gpt-5",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc37e"),
+    model_id: 104,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "gemini-3-pro-preview",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc37f"),
+    model_id: 105,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "claude-sonnet-4-6",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc380"),
+    model_id: 106,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "deepseek-r1",
+    is_preferred: true
+} ]);
+db.getCollection("wisepen_model_provider_mappings").insert([ {
+    _id: ObjectId("69d7250edfef56e2b20fc381"),
+    model_id: 107,
+    provider_id: ObjectId("69d72506dfef56e2b20fc374"),
+    provider_model_name: "grok-4",
+    is_preferred: true
+} ]);
+
+// ----------------------------
+// Collection structure for wisepen_models
+// ----------------------------
+db.getCollection("wisepen_models").drop();
+db.createCollection("wisepen_models");
+
+// ----------------------------
+// Documents of wisepen_models
+// ----------------------------
+db.getCollection("wisepen_models").insert([ {
+    _id: 1,
+    display_name: "GPT-4o Mini",
+    vendor: "OpenAI",
+    type: 1,
+    billing_ratio: 1,
+    support_thinking: false,
+    support_vision: true,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 2,
+    display_name: "GPT-4.1 Nano",
+    vendor: "OpenAI",
+    type: 1,
+    billing_ratio: 1,
+    support_thinking: false,
+    support_vision: true,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 3,
+    display_name: "Gemini 3 Flash",
+    vendor: "Google",
+    type: 1,
+    billing_ratio: 5,
+    support_thinking: true,
+    support_vision: true,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 4,
+    display_name: "DeepSeek Chat",
+    vendor: "DeepSeek",
+    type: 1,
+    billing_ratio: 1,
+    support_thinking: false,
+    support_vision: false,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 5,
+    display_name: "Grok 3 Mini",
+    vendor: "xAI",
+    type: 1,
+    billing_ratio: 1,
+    support_thinking: false,
+    support_vision: false,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 6,
+    display_name: "Claude Haiku 4.5",
+    vendor: "Anthropic",
+    type: 1,
+    billing_ratio: 8,
+    support_thinking: false,
+    support_vision: true,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 101,
+    display_name: "GPT-4o",
+    vendor: "OpenAI",
+    type: 2,
+    billing_ratio: 17,
+    support_thinking: false,
+    support_vision: true,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 102,
+    display_name: "GPT-4.1",
+    vendor: "OpenAI",
+    type: 2,
+    billing_ratio: 13,
+    support_thinking: false,
+    support_vision: true,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 103,
+    display_name: "GPT-5",
+    vendor: "OpenAI",
+    type: 2,
+    billing_ratio: 17,
+    support_thinking: false,
+    support_vision: true,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 104,
+    display_name: "Gemini 3 Pro",
+    vendor: "Google",
+    type: 2,
+    billing_ratio: 20,
+    support_thinking: true,
+    support_vision: true,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 105,
+    display_name: "Claude Sonnet 4.6",
+    vendor: "Anthropic",
+    type: 2,
+    billing_ratio: 25,
+    support_thinking: true,
+    support_vision: true,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 106,
+    display_name: "DeepSeek R1",
+    vendor: "DeepSeek",
+    type: 2,
+    billing_ratio: 3,
+    support_thinking: true,
+    support_vision: false,
+    is_active: true
+} ]);
+db.getCollection("wisepen_models").insert([ {
+    _id: 107,
+    display_name: "Grok 4",
+    vendor: "xAI",
+    type: 2,
+    billing_ratio: 25,
+    support_thinking: true,
+    support_vision: false,
+    is_active: true
+} ]);
+
+// ----------------------------
+// Collection structure for wisepen_providers
+// ----------------------------
+db.getCollection("wisepen_providers").drop();
+db.createCollection("wisepen_providers");
+
+// ----------------------------
+// Documents of wisepen_providers
+// -----------------------------
+// 整段仅在 business.env 中 WISEPEN_LLM_PROVIDER_API_KEY 非空时插入；
+// 留空则 wisepen_providers 集合保持为空，AI 业务先不可用；后续可 docker exec
+// 进 mongo 手工 insert（详见 deploy/business/seed/README.md "凭据轮转 / 改库"）
+// ----------------------------
+/* @if WISEPEN_LLM_PROVIDER_API_KEY */
+db.getCollection("wisepen_providers").insert([ {
+    _id: ObjectId("69d72506dfef56e2b20fc374"),
+    name: "智增增",
+    api_base_url: "https://api.zhizengzeng.com/v1",
+    api_key: "${WISEPEN_LLM_PROVIDER_API_KEY}",
+    usage: 0,
+    is_active: true
+} ]);
+/* @endif */

@@ -1,0 +1,34 @@
+# =============================================================================
+# WisePen 主仓库 git 属性
+# =============================================================================
+
+# text 文件由 git 自动处理换行（受 core.autocrlf 影响）
+* text=auto eol=lf
+
+# 显式 LF（不可被 CRLF 化）
+*.sh           text eol=lf
+*.bash         text eol=lf
+*.lua          text eol=lf
+*.py           text eol=lf
+Dockerfile     text eol=lf
+*.dockerfile   text eol=lf
+docker-compose*.yml  text eol=lf
+docker-compose*.yaml text eol=lf
+.env.*         text eol=lf
+
+# 显式二进制
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.zip   binary
+*.tar   binary
+*.tar.gz binary
+*.tgz   binary
+*.jar   binary
+*.pdf   binary
+
+# 把生成的文件 / vendor 目录从语言统计排除
+versions.yaml                  linguist-detectable=true linguist-language=YAML

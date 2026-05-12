@@ -1,0 +1,65 @@
+# =============================================================================
+# Jenkins profile
+# -----------------------------------------------------------------------------
+# 机制：
+#   - 自定义镜像：deploy/middleware/jenkins/Dockerfile + plugins.txt（含 JCasC、Job DSL 等）
+#   - 系统配置：seed/jenkins/casc.yaml 由 JCasC 启动加载
+#       · admin / authz / 凭据 (scm-credentials, nacos-username, nacos-password)
+#       · jobs root section 调度 seed/jenkins/jobs/seed.groovy（Job DSL）
+#   - 任务自动化：seed.groovy 用 multibranchPipelineJob() 创建 4 个流水线，分别指向
+#       wisepen-cloud-gateway-deploy / wisepen-cloud / wisepen-cloud-ai /
+#       wisepen-cloud-sidecar 四仓库
+#
+# 必备环境变量（来自 deploy/middleware/.env）：
+#   JENKINS_ADMIN_USER / JENKINS_ADMIN_PASSWORD
+#   JENKINS_SCM_BASE_URL（如 https://github.com/your-org，无尾斜杠）
+#   JENKINS_SCM_CRED_USER / JENKINS_SCM_CRED_TOKEN
+#   JENKINS_NACOS_USERNAME / JENKINS_NACOS_PASSWORD
+# =============================================================================
+name: wisepen-middleware
+
+services:
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    image: wisepen-jenkins:local
+    container_name: wisepen-jenkins
+    restart: unless-stopped
+    user: root
+    environment:
+      TZ: Asia/Shanghai
+      # runSetupWizard=false 让 JCasC 接管初始化，无需在 UI 拿 initialAdminPassword
+      JAVA_OPTS: "${JENKINS_JAVA_OPTS:--Xms512m -Xmx1024m} -Djenkins.install.runSetupWizard=false"
+      CASC_JENKINS_CONFIG: /var/jenkins_home/casc.yaml
+      JENKINS_ADMIN_USER: ${JENKINS_ADMIN_USER:-admin}
+      JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:?JENKINS_ADMIN_PASSWORD must be set in .env}
+      JENKINS_SCM_BASE_URL: ${JENKINS_SCM_BASE_URL:?JENKINS_SCM_BASE_URL must be set in .env (e.g. https://github.com/your-org)}
+      JENKINS_SCM_CRED_USER: ${JENKINS_SCM_CRED_USER}
+      JENKINS_SCM_CRED_TOKEN: ${JENKINS_SCM_CRED_TOKEN}
+      JENKINS_NACOS_USERNAME: ${JENKINS_NACOS_USERNAME:-nacos}
+      JENKINS_NACOS_PASSWORD: ${JENKINS_NACOS_PASSWORD:?JENKINS_NACOS_PASSWORD must be set in .env}
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${JENKINS_HTTP_HOST_PORT:-8080}:8080"
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${JENKINS_AGENT_HOST_PORT:-50000}:50000"
+    volumes:
+      - wisepen-jenkins-data:/var/jenkins_home
+      # JCasC 系统配置（compose 启动时挂入；改完用 scripts/middleware/jenkins.sh reload 热加载）
+      - ./seed/jenkins/casc.yaml:/var/jenkins_home/casc.yaml:ro
+      # Job DSL 种子脚本（由 JCasC 通过 jobs root section 调度，详见 casc.yaml）
+      - ./seed/jenkins/jobs:/var/jenkins_home/casc-jobs:ro
+      # 让 Jenkins 调用宿主 docker 构建/推送镜像；不需要时注释这两行
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+    networks:
+      wisepen-net:
+        aliases:
+          - jenkins
+
+networks:
+  wisepen-net:
+    name: wisepen-net
+    external: true
+
+volumes:
+  wisepen-jenkins-data:

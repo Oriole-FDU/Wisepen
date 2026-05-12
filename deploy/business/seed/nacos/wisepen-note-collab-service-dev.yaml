@@ -1,0 +1,13 @@
+# =============================================================================
+# wisepen-note-collab-service（dev profile）
+# =============================================================================
+kafka:
+  brokers: "${WISEPEN_KAFKA_HOST:${WISEPEN_INFRA_HOST:localhost}}:${WISEPEN_KAFKA_PORT:9094}"
+
+collab:
+  checkpoint-interval: 10
+  snapshot-flush-interval-ms: 5000
+  room-idle-destroy-delay-ms: 30000
+
+security:
+  from-source-secret: "${FROM_SOURCE_SECRET:APISIX-wX0iR6tY}"

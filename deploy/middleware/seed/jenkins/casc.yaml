@@ -1,0 +1,58 @@
+# =============================================================================
+# Jenkins Configuration as Code (JCasC)
+# -----------------------------------------------------------------------------
+# 启动时由 jenkins.yml 通过 CASC_JENKINS_CONFIG=/var/jenkins_home/casc.yaml 加载
+# 修改后可用 `scripts/middleware/jenkins.sh reload` 热加载，无需重建容器
+#
+# 凭据 / URL 使用 ${VAR} 占位符，由容器 env（来自 deploy/middleware/.env）注入
+# =============================================================================
+jenkins:
+  systemMessage: "WisePen Jenkins (provisioned by JCasC)"
+  numExecutors: 2
+  mode: NORMAL
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: ${JENKINS_ADMIN_USER}
+          password: ${JENKINS_ADMIN_PASSWORD}
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+  remotingSecurity:
+    enabled: true
+
+security:
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: scm-credentials
+              username: ${JENKINS_SCM_CRED_USER}
+              password: ${JENKINS_SCM_CRED_TOKEN}
+              description: "SCM (GitHub PAT or git pwd) used by all multibranch pipelines"
+          # Nacos 凭据：拆成两条 secret-text，匹配子仓库 Jenkinsfile 中
+          # `credentials('nacos-username')` / `credentials('nacos-password')` 的用法
+          - string:
+              scope: GLOBAL
+              id: nacos-username
+              secret: ${JENKINS_NACOS_USERNAME}
+              description: "Nacos username injected into pipelines via credentials('nacos-username')"
+          - string:
+              scope: GLOBAL
+              id: nacos-password
+              secret: ${JENKINS_NACOS_PASSWORD}
+              description: "Nacos password injected into pipelines via credentials('nacos-password')"
+
+unclassified:
+  location:
+    url: http://jenkins:8080/
+
+# Job DSL：JCasC 调度，把 seed.groovy 放到 Job DSL plugin 的执行环境里跑
+jobs:
+  - file: /var/jenkins_home/casc-jobs/seed.groovy

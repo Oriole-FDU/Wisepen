@@ -1,0 +1,23 @@
+# =============================================================================
+# bind-data-observability.yml — observability 数据卷的宿主目录绑定覆盖
+# -----------------------------------------------------------------------------
+# 必须与 profiles/observability.yml 一起叠加；由 lib/compose.sh 自动追加
+# =============================================================================
+name: wisepen-middleware
+
+services:
+  tempo:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/tempo:/tmp/tempo
+
+  loki:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/loki:/tmp/loki
+
+  prometheus:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/prometheus:/prometheus
+
+  grafana:
+    volumes:
+      - ${WISEPEN_DATA_ROOT}/grafana:/var/lib/grafana

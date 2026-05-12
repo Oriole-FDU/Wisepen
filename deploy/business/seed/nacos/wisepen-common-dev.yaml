@@ -1,0 +1,39 @@
+# =============================================================================
+# wisepen-common 共享配置（dev profile）
+# -----------------------------------------------------------------------------
+# 由所有 wisepen-cloud (仅适用于此项目) 子服务通过 shared-configs 引用
+# =============================================================================
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+spring:
+  data:
+    redis:
+      host: ${WISEPEN_REDIS_HOST:${WISEPEN_INFRA_HOST:localhost}}
+      port: ${WISEPEN_REDIS_PORT:6379}
+      password: ${WISEPEN_REDIS_PASSWORD:root}
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: 2000ms
+  kafka:
+    bootstrap-servers: ${WISEPEN_KAFKA_HOST:${WISEPEN_INFRA_HOST:localhost}}:${WISEPEN_KAFKA_PORT:9094}
+    producer:
+      retries: 3
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+
+springdoc:
+  api-docs.enabled: true
+  swagger-ui.enabled: true

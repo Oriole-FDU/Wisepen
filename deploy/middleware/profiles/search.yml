@@ -1,0 +1,56 @@
+# =============================================================================
+# Search profile
+# -----------------------------------------------------------------------------
+# Elasticsearch + Kibana
+# =============================================================================
+name: wisepen-middleware
+
+services:
+  elasticsearch:
+    image: elasticsearch:8.11.1
+    container_name: wisepen-elasticsearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS:--Xms512m -Xmx512m}
+      TZ: Asia/Shanghai
+      xpack.security.enabled: "true"
+      ELASTIC_PASSWORD: ${ES_ELASTIC_PASSWORD:?ES_ELASTIC_PASSWORD must be set in .env}
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${ES_HOST_PORT:-9200}:9200"
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${ES_TRANSPORT_HOST_PORT:-9300}:9300"
+    volumes:
+      - wisepen-elasticsearch-data:/usr/share/elasticsearch/data
+      # 自定义插件目录（如 IK 分词器）默认 named volume；要拷插件可叠加 bind-data.yml 改为宿主目录
+      - wisepen-elasticsearch-plugins:/usr/share/elasticsearch/plugins
+    networks:
+      wisepen-net:
+        aliases:
+          - elasticsearch
+
+  kibana:
+    image: kibana:8.11.1
+    container_name: wisepen-kibana
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${KIBANA_HOST_PORT:-5601}:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: elastic
+      ELASTICSEARCH_PASSWORD: ${ES_ELASTIC_PASSWORD:?ES_ELASTIC_PASSWORD must be set in .env}
+      TZ: Asia/Shanghai
+    networks:
+      wisepen-net:
+        aliases:
+          - kibana
+
+networks:
+  wisepen-net:
+    name: wisepen-net
+    external: true
+
+volumes:
+  wisepen-elasticsearch-data:
+  wisepen-elasticsearch-plugins:

@@ -1,0 +1,104 @@
+# =============================================================================
+# Observability profile
+# -----------------------------------------------------------------------------
+# OpenTelemetry Collector + Tempo + Loki + Prometheus + Grafana
+# =============================================================================
+name: wisepen-middleware
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: wisepen-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./conf/observability/otel-collector.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${OTEL_GRPC_HOST_PORT:-4317}:4317"
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${OTEL_HTTP_HOST_PORT:-4318}:4318"
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${OTEL_PROMETHEUS_EXPORT_HOST_PORT:-8889}:8889"
+    networks:
+      wisepen-net:
+        aliases:
+          - otel-collector
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    container_name: wisepen-tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./conf/observability/tempo.yaml:/etc/tempo.yaml:ro
+      - wisepen-tempo-data:/tmp/tempo
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${TEMPO_HOST_PORT:-3200}:3200"
+    networks:
+      wisepen-net:
+        aliases:
+          - tempo
+
+  loki:
+    image: grafana/loki:latest
+    container_name: wisepen-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./conf/observability/loki.yaml:/etc/loki/local-config.yaml:ro
+      - wisepen-loki-data:/tmp/loki
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${LOKI_HOST_PORT:-3100}:3100"
+    networks:
+      wisepen-net:
+        aliases:
+          - loki
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: wisepen-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+      - --web.enable-remote-write-receiver
+    volumes:
+      - ./conf/observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - wisepen-prometheus-data:/prometheus
+    networks:
+      wisepen-net:
+        aliases:
+          - prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: wisepen-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${GRAFANA_HOST_PORT:-3000}:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set in .env}
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - wisepen-grafana-data:/var/lib/grafana
+      - ./conf/observability/grafana-datasource.yaml:/etc/grafana/provisioning/datasource.yaml:ro
+    networks:
+      wisepen-net:
+        aliases:
+          - grafana
+
+networks:
+  wisepen-net:
+    name: wisepen-net
+    external: true
+
+volumes:
+  wisepen-tempo-data:
+  wisepen-loki-data:
+  wisepen-prometheus-data:
+  wisepen-grafana-data:

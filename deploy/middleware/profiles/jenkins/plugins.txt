@@ -1,0 +1,11 @@
+configuration-as-code
+job-dsl
+workflow-aggregator
+workflow-multibranch
+git
+github-branch-source
+credentials-binding
+docker-workflow
+pipeline-stage-view
+timestamper
+ws-cleanup

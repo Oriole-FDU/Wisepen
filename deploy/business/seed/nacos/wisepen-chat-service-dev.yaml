@@ -1,0 +1,61 @@
+# =============================================================================
+# wisepen-chat-service（dev profile）
+# -----------------------------------------------------------------------------
+# AI / Chat 服务（Python FastAPI）业务配置
+# =============================================================================
+
+# --- LLM 默认网关配置 ---
+LLM_BASE_URL: "${LLM_BASE_URL:}"
+LLM_API_KEY: "${LLM_API_KEY:}"
+DEFAULT_MODEL_ID: 1
+
+# --- 模型配置 ---
+# --- Memory ---
+MEMORY_LLM_MODEL: "${MEMORY_LLM_MODEL:}"
+MEMORY_EMBEDDING_MODEL: "${MEMORY_EMBEDDING_MODEL:}"
+MEMORY_RERANKER_ZE_MODEL: "${MEMORY_RERANKER_ZE_MODEL:}"
+ZERO_ENTROPY_API_KEY: "${ZERO_ENTROPY_API_KEY:}"
+# --- Summary ---
+SUMMARY_MODEL: "${SUMMARY_MODEL:}"
+
+# --- 安全 ---
+FROM_SOURCE_SECRET: "${FROM_SOURCE_SECRET:APISIX-wX0iR6tY}"
+
+# --- KAFKA ---
+KAFKA_BOOTSTRAP_SERVERS: "${WISEPEN_KAFKA_HOST:${WISEPEN_INFRA_HOST:localhost}}:${WISEPEN_KAFKA_PORT:9094}"
+
+# --- Redis ---
+REDIS_URL: "redis://:${WISEPEN_REDIS_PASSWORD:root}@${WISEPEN_REDIS_HOST:${WISEPEN_INFRA_HOST:localhost}}:${WISEPEN_REDIS_PORT:6379}/1"
+
+# --- MongoDB ---
+MONGODB_URL: "mongodb://${WISEPEN_MONGO_USER:root}:${WISEPEN_MONGO_PASSWORD:root}@${WISEPEN_MONGO_HOST:${WISEPEN_INFRA_HOST:localhost}}:${WISEPEN_MONGO_PORT:27017}/"
+MONGODB_DB_NAME: "wisepen_chat"
+
+# --- Qdrant (Mem0 长期语义记忆向量存储) ---
+QDRANT_HOST: "${WISEPEN_QDRANT_HOST:${WISEPEN_INFRA_HOST:localhost}}"
+QDRANT_PORT: ${WISEPEN_QDRANT_PORT:6333}
+QDRANT_PASSWORD: "${WISEPEN_QDRANT_PASSWORD:root}"
+
+# --- 上下文窗口 / 双水位压缩 ---
+# CTX_TOKEN_LIMIT: 128000
+# CTX_HIGH_WATERMARK_RATIO: 0.8
+# CTX_LOW_WATERMARK_RATIO: 0.5
+# CTX_FALLBACK_HISTORY_LIMIT: 20
+
+# --- Agentic ReAct 循环 ---
+# AGENT_MAX_ITERATIONS: 5
+# TOOL_RESULT_MAX_CHARS: 4000
+
+# --- Skill 子系统 ---
+# SKILL_ASSETS_CACHE_DIR: "dev_fixtures/skill_bundles"
+# SKILL_OSS_CACHE_DIR: "/var/skill_oss_cache"
+# SKILL_OSS_CACHE_TTL_SECONDS: 21600        # 6h
+# SKILL_OSS_CACHE_GC_INTERVAL_SECONDS: 1800 # 30min
+# SKILL_MATCH_TOP_K: 2
+# SKILL_CACHE_TTL_SECONDS: 30
+
+# --- 内部 RPC / 服务发现 ---
+# RPC_LB_STRATEGY: "weighted_random"
+# RPC_DEFAULT_TIMEOUT: 5.0
+# RPC_DEFAULT_RETRIES: 2
+# SERVICE_DISCOVERY_CACHE_TTL_SECONDS: 30.0

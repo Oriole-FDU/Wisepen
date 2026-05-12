@@ -1,0 +1,31 @@
+# =============================================================================
+# WisePen Platform 版本清单
+# -----------------------------------------------------------------------------
+# 平台级 SemVer 版本与五个 submodule 的对应关系
+# =============================================================================
+
+version: v0.1.0-dev
+released_at: 2026-05-12
+released_by: Oriole Studio
+
+components:
+  wisepen-view:
+    repo: https://github.com/Oriole-FDU/WisePenView.git
+    tag: null
+    sha: a85edca71043f796213f23f3679e749e6e493225
+  wisepen-cloud:
+    repo: https://github.com/Oriole-FDU/WisePenCloud.git
+    tag: null
+    sha: 21761634729c7cb5afa51566e291401c40b96206
+  wisepen-cloud-ai:
+    repo: https://github.com/Oriole-FDU/WisePenCloud-AI.git
+    tag: null
+    sha: cff3cb1a7f8a1ad99b25a7fe388cb08210098c58
+  wisepen-cloud-sidecar:
+    repo: https://github.com/Oriole-FDU/WisePenCloud-Sidecar.git
+    tag: null
+    sha: f5340369f3bcc123c5d383830f3797ec527f952f
+  wisepen-cloud-gateway-deploy:
+    repo: https://github.com/Oriole-FDU/WisePenCloud-GatewayDeploy.git
+    tag: null
+    sha: 71dc0fa1263df4fa454793327f178a4c8c3c8ccc

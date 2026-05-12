@@ -1,0 +1,64 @@
+# APISIX 主配置
+apisix:
+  node_listen: 9080
+  enable_ipv6: false
+
+  custom_lua_shared_dict:
+    session_cache: 10m   # 网关层 session 缓存
+
+deployment:
+  role: traditional
+  role_traditional:
+    config_provider: etcd
+
+  etcd:
+    host:
+      - "http://etcd:2379"
+    prefix: "/apisix"
+    user: "root"
+    password: "${{ETCD_ROOT_PASSWORD}}"
+    timeout: 30
+
+  admin:
+    allow_admin:
+      - 0.0.0.0/0
+    admin_key:
+      - name: "admin"
+        key: "${{APISIX_ADMIN_KEY}}"
+        role: admin
+
+discovery:
+  nacos:
+    host:
+      - "http://${{NACOS_USERNAME}}:${{NACOS_PASSWORD}}@nacos:8848"
+    prefix: "/nacos/v1/"
+    fetch_interval: 1
+    weight: 100
+    timeout:
+      connect: 2000
+      send: 2000
+      read: 5000
+
+plugins:
+  - cors
+  - prometheus
+  - opentelemetry
+  - serverless-pre-function
+  - serverless-post-function
+  - response-rewrite
+
+plugin_attr:
+  prometheus:
+    export_uri: /apisix/prometheus/metrics
+    enable_export_server: true
+    export_addr:
+      ip: 0.0.0.0
+      port: 9091
+
+  opentelemetry:
+    trace_id_source: x-request-id
+    resource:
+      service.name: APISIX-Gateway
+    collector:
+      address: otel-collector:4318
+      request_timeout: 5

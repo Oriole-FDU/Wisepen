@@ -1,0 +1,15 @@
+[submodule "wisepen-view"]
+	path = wisepen-view
+	url = https://github.com/Oriole-FDU/WisePenView.git
+[submodule "wisepen-cloud"]
+	path = wisepen-cloud
+	url = https://github.com/Oriole-FDU/WisePenCloud.git
+[submodule "wisepen-cloud-ai"]
+	path = wisepen-cloud-ai
+	url = https://github.com/Oriole-FDU/WisePenCloud-AI.git
+[submodule "wisepen-cloud-sidecar"]
+	path = wisepen-cloud-sidecar
+	url = https://github.com/Oriole-FDU/WisePenCloud-Sidecar.git
+[submodule "wisepen-cloud-gateway-deploy"]
+	path = wisepen-cloud-gateway-deploy
+	url = https://github.com/Oriole-FDU/WisePenCloud-GatewayDeploy.git

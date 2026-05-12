@@ -1,0 +1,15 @@
+# =============================================================================
+# wisepen-resource-service（dev profile）
+# =============================================================================
+spring:
+  data:
+    mongodb:
+      uri: mongodb://${WISEPEN_MONGO_USER:root}:${WISEPEN_MONGO_PASSWORD:root}@${WISEPEN_MONGO_HOST:${WISEPEN_INFRA_HOST:localhost}}:${WISEPEN_MONGO_PORT:27017}/wisepen_res_permission?authSource=admin
+
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+
+springdoc:
+  api-docs.enabled: true
+  swagger-ui.enabled: true

@@ -1,0 +1,51 @@
+# ── 环境变量（敏感）──────────────────────────────────────────
+# 主仓库不再提供根级 .env 样例；样例随各子仓库就近上库。
+.env
+.env.local
+.env.internal
+.env.*.local
+.env.*.internal
+
+# ── 部署运行时数据 / 部署侧本地 .env ─────────────────────────
+# seed.sh::render_db_seed() 拼合渲染产物，docker-compose 从此目录挂入容器
+deploy/middleware/seed/.rendered/
+
+# 业务凭据 env（OSS / LLM api_key），与中间件 .env 完全独立
+deploy/business/seed/business.env
+
+# init-envs.sh 生成的各微服务 .env 归档（含真实凭证）
+deploy/envs/*.env
+
+# 允许各 deploy 目录的 env.example 与归档目录的 .gitkeep 上库
+!deploy/**/env.example
+!deploy/business/seed/business.env.example
+!deploy/envs/.gitkeep
+!deploy/envs/.gitignore
+!deploy/envs/README.md
+
+# ── 编辑器 / IDE ──────────────────────────────────────────
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.template.json
+*.iml
+*.iws
+*.ipr
+
+# ── OS ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── 日志 ───────────────────────────────────────────────────
+*.log
+logs/
+
+# ── 临时 / 备份 ──────────────────────────────────────────
+*.bak
+*.tmp
+*.swp
+.cache/
+
+# ── Cursor / AI 助手缓存 ──────────────────────────────────
+.cursorrules.local
+.cursorignore.local

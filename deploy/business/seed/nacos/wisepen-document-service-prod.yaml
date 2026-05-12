@@ -1,0 +1,22 @@
+# =============================================================================
+# wisepen-document-service（prod profile）
+# =============================================================================
+spring:
+  data:
+    mongodb:
+      uri: mongodb://${WISEPEN_MONGO_USER:root}:${WISEPEN_MONGO_PASSWORD:root}@${WISEPEN_MONGO_HOST:${WISEPEN_INFRA_HOST:localhost}}:${WISEPEN_MONGO_PORT:27017}/wisepen_document?authSource=admin
+
+jodconverter:
+  local:
+    enabled: false
+  remote:
+    enabled: true
+    url: ${WISEPEN_JOD_URL:http://${WISEPEN_INFRA_HOST:localhost}:${WISEPEN_JOD_PORT:8100}/}
+
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: INFO
+
+springdoc:
+  api-docs.enabled: false
+  swagger-ui.enabled: false

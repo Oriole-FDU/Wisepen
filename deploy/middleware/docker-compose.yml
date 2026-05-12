@@ -1,0 +1,297 @@
+# =============================================================================
+# WisePen 中间件套装
+# -----------------------------------------------------------------------------
+# 包含：MySQL, Redis, MongoDB, Nacos, etcd, APISIX, APISIX Dashboard,
+#       Kafka(KRaft), Kafka UI, Qdrant, JODConverter
+#
+# 可选层（按需叠加 -f profiles/*.yml）：
+#   - profiles/observability.yml   OTel + Tempo + Loki + Prometheus + Grafana
+#   - profiles/search.yml          Elasticsearch + Kibana
+#   - profiles/jenkins.yml         Jenkins (含 JCasC + Job DSL，默认随 up.sh 启动)
+#
+# 端口绑定：所有宿主端口都加 ${WISEPEN_BIND_ADDR:-127.0.0.1} 前缀
+#   - 本地形态：默认 127.0.0.1，仅自机访问
+#   - 开发服务器形态：把 .env 中 WISEPEN_BIND_ADDR=0.0.0.0 即对外暴露
+#
+# 数据持久化：默认 named volumes（docker 自管，不污染仓库目录）。
+#   想把数据放在指定目录（备份/迁移/与外部工具共享），叠加 profiles/bind-data.yml
+#   并在 .env 设置 WISEPEN_DATA_ROOT=/srv/wisepen 之类的绝对路径；up.sh 会自动叠加。
+# =============================================================================
+name: wisepen-middleware
+
+services:
+  # =========================================================================
+  # 1. 基础存储层 (MySQL, Redis, MongoDB)
+  # =========================================================================
+  mysql:
+    image: mysql:8.0
+    container_name: wisepen-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${WISEPEN_MYSQL_PASSWORD:?WISEPEN_MYSQL_PASSWORD must be set in .env}
+      TZ: Asia/Shanghai
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${WISEPEN_MYSQL_HOST_PORT:-3306}:3306"
+    volumes:
+      - wisepen-mysql-data:/var/lib/mysql
+      # 首次启动自动执行 schema dump。挂载点是 up.sh 渲染后的产物目录：
+      # 中间件 seed (00-nacos-schema.sql) + 业务 seed (deploy/business/seed/mysql/*) 拼合而成。
+      # 直接 docker compose up（不走 up.sh）则该目录可能为空
+      - ./seed/.rendered/mysql:/docker-entrypoint-initdb.d:ro
+    networks:
+      wisepen-net:
+        aliases:
+          - mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: wisepen-redis
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    command: redis-server --requirepass "${WISEPEN_REDIS_PASSWORD:?WISEPEN_REDIS_PASSWORD must be set in .env}" --appendonly yes
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${WISEPEN_REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - wisepen-redis-data:/data
+    networks:
+      wisepen-net:
+        aliases:
+          - redis
+
+  mongo:
+    image: mongo:6.0
+    container_name: wisepen-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${WISEPEN_MONGO_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${WISEPEN_MONGO_PASSWORD:?WISEPEN_MONGO_PASSWORD must be set in .env}
+      TZ: Asia/Shanghai
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${WISEPEN_MONGO_HOST_PORT:-27017}:27017"
+    volumes:
+      - wisepen-mongo-data:/data/db
+      # 同 mysql：up.sh 渲染产物目录（拼合中间件 + 业务 mongo seed）
+      - ./seed/.rendered/mongo:/docker-entrypoint-initdb.d:ro
+    networks:
+      wisepen-net:
+        aliases:
+          - mongo
+
+  # =========================================================================
+  # 2. 注册与配置中心 (Nacos)
+  # =========================================================================
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: wisepen-nacos
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      MODE: standalone
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+      TZ: Asia/Shanghai
+      NACOS_AUTH_ENABLE: "true"
+      NACOS_AUTH_TOKEN: ${NACOS_AUTH_TOKEN:?NACOS_AUTH_TOKEN must be set in .env}
+      NACOS_AUTH_IDENTITY_KEY: ${NACOS_IDENTITY_KEY:-nacos}
+      NACOS_AUTH_IDENTITY_VALUE: ${NACOS_IDENTITY_VALUE:-nacos}
+      PREFER_HOST_MODE: hostname
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_DB_NAME: nacos
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: ${WISEPEN_MYSQL_PASSWORD:?WISEPEN_MYSQL_PASSWORD must be set in .env}
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${WISEPEN_NACOS_HOST_PORT:-8848}:8848"
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${WISEPEN_NACOS_GRPC_HOST_PORT:-9848}:9848"
+    volumes:
+      - wisepen-nacos-logs:/home/nacos/logs
+      - wisepen-nacos-data:/home/nacos/data
+    networks:
+      wisepen-net:
+        aliases:
+          - nacos
+
+  # =========================================================================
+  # 3. 网关层 (APISIX + etcd + Dashboard)
+  # =========================================================================
+  etcd:
+    image: bitnami/etcd:3.5
+    container_name: wisepen-etcd
+    restart: unless-stopped
+    environment:
+      ALLOW_NONE_AUTHENTICATION: "no"
+      ETCD_ROOT_PASSWORD: ${ETCD_ROOT_PASSWORD:?ETCD_ROOT_PASSWORD must be set in .env}
+      TZ: Asia/Shanghai
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
+    volumes:
+      - wisepen-etcd-data:/bitnami/etcd-data
+    networks:
+      wisepen-net:
+        aliases:
+          - etcd
+
+  apisix:
+    image: apache/apisix:3.8.0-debian
+    container_name: wisepen-apisix
+    restart: unless-stopped
+    depends_on:
+      - etcd
+      - nacos
+    environment:
+      ETCD_ROOT_PASSWORD: ${ETCD_ROOT_PASSWORD:?ETCD_ROOT_PASSWORD must be set in .env}
+      NACOS_USERNAME: ${NACOS_USERNAME:-nacos}
+      NACOS_PASSWORD: ${NACOS_PASSWORD:?NACOS_PASSWORD must be set in .env}
+      APISIX_ADMIN_KEY: ${APISIX_ADMIN_KEY:?APISIX_ADMIN_KEY must be set in .env}
+      TZ: Asia/Shanghai
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${APISIX_HTTP_PORT:-9080}:9080"
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${APISIX_HTTPS_PORT:-9443}:9443"
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${APISIX_ADMIN_HOST_PORT:-9180}:9180"
+    volumes:
+      - ./conf/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./conf/apisix/nacos_patched.lua:/usr/local/apisix/apisix/discovery/nacos/init.lua:ro
+    networks:
+      wisepen-net:
+        aliases:
+          - apisix
+
+  apisix-dashboard:
+    image: apache/apisix-dashboard:3.0.1-alpine
+    container_name: wisepen-apisix-dashboard
+    restart: unless-stopped
+    depends_on:
+      - etcd
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${APISIX_DASHBOARD_HOST_PORT:-9000}:9000"
+    volumes:
+      - ./conf/apisix-dashboard/conf.yaml:/tmp/conf.yaml:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        sed -e 's|\$${ETCD_ROOT_PASSWORD}|${ETCD_ROOT_PASSWORD:?required}|g' \
+            -e 's|\$${APISIX_DASHBOARD_USER}|${APISIX_DASHBOARD_USER:-admin}|g' \
+            -e 's|\$${APISIX_DASHBOARD_PASSWORD}|${APISIX_DASHBOARD_PASSWORD:?required}|g' \
+            -e 's|\$${APISIX_DASHBOARD_SECRET}|${APISIX_DASHBOARD_SECRET:?required}|g' \
+            /tmp/conf.yaml > /usr/local/apisix-dashboard/conf/conf.yaml
+        exec /usr/local/apisix-dashboard/manager-api -p /usr/local/apisix-dashboard/
+    networks:
+      wisepen-net:
+        aliases:
+          - apisix-dashboard
+
+  # =========================================================================
+  # 4. 消息队列 (Kafka KRaft 模式 + Kafka UI)
+  # =========================================================================
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: wisepen-kafka
+    restart: unless-stopped
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${KAFKA_INTERNAL_HOST_PORT:-9092}:9092"
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${KAFKA_EXTERNAL_HOST_PORT:-9094}:9094"
+    environment:
+      # KRaft 模式
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      # 三个 listener：内部 / 控制器 / 宿主机或外部访问；EXTERNAL 通告 host 由 .env 注入
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://${WISEPEN_PUBLIC_HOST:-localhost}:${KAFKA_EXTERNAL_HOST_PORT:-9094}
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      TZ: Asia/Shanghai
+    volumes:
+      - wisepen-kafka-data:/bitnami/kafka
+    networks:
+      wisepen-net:
+        aliases:
+          - kafka
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: wisepen-kafka-ui
+    restart: unless-stopped
+    depends_on:
+      - kafka
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${KAFKA_UI_HOST_PORT:-9091}:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: wisepen-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      TZ: Asia/Shanghai
+      AUTH_TYPE: LOGIN_FORM
+      SPRING_SECURITY_USER_NAME: ${KAFKA_UI_USER:-admin}
+      SPRING_SECURITY_USER_PASSWORD: ${KAFKA_UI_PASSWORD:?KAFKA_UI_PASSWORD must be set in .env}
+    networks:
+      wisepen-net:
+        aliases:
+          - kafka-ui
+
+  # =========================================================================
+  # 5. 向量数据库 (Qdrant)
+  # =========================================================================
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: wisepen-qdrant
+    restart: unless-stopped
+    environment:
+      QDRANT__SERVICE__API_KEY: ${WISEPEN_QDRANT_API_KEY:?WISEPEN_QDRANT_API_KEY must be set in .env}
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${WISEPEN_QDRANT_HOST_PORT:-6333}:6333"
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${WISEPEN_QDRANT_GRPC_HOST_PORT:-6334}:6334"
+    volumes:
+      - wisepen-qdrant-data:/qdrant/storage
+    networks:
+      wisepen-net:
+        aliases:
+          - qdrant
+
+  # =========================================================================
+  # 6. 文档转换服务 (JODConverter Remote)
+  # =========================================================================
+  jodconverter:
+    image: ghcr.io/jodconverter/jodconverter-examples:rest
+    container_name: wisepen-jodconverter
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 100MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 100MB
+    ports:
+      - "${WISEPEN_BIND_ADDR:-127.0.0.1}:${WISEPEN_JOD_HOST_PORT:-8100}:8080"
+    volumes:
+      # 自定义字体目录（默认 named volume；要往里塞字体可叠加 bind-data.yml 指向某宿主目录）
+      - wisepen-jod-fonts:/usr/share/fonts/custom
+    networks:
+      wisepen-net:
+        aliases:
+          - jodconverter
+
+networks:
+  wisepen-net:
+    name: wisepen-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${WISEPEN_NET_SUBNET:-172.28.0.0/16}
+
+volumes:
+  # docker named volumes（默认）
+  # 想换成宿主机绑定挂载（自定义路径、便于备份/迁移）：
+  #   1) 在 .env 里设置 WISEPEN_DATA_ROOT=/srv/wisepen （绝对路径，/srv/wisepen 仅供参考）
+  #   2) 让 up.sh 自动叠加 profiles/bind-data.yml（识别 WISEPEN_DATA_ROOT 即叠加）
+  wisepen-mysql-data:
+  wisepen-redis-data:
+  wisepen-mongo-data:
+  wisepen-nacos-logs:
+  wisepen-nacos-data:
+  wisepen-etcd-data:
+  wisepen-kafka-data:
+  wisepen-qdrant-data:
+  wisepen-jod-fonts:

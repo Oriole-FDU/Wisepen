@@ -1,0 +1,45 @@
+# =============================================================================
+# wisepen-system-service（dev profile）
+# =============================================================================
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${WISEPEN_MYSQL_HOST:${WISEPEN_INFRA_HOST:localhost}}:${WISEPEN_MYSQL_PORT:3306}/wisepen_system?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${WISEPEN_MYSQL_USER:root}
+    password: ${WISEPEN_MYSQL_PASSWORD:root}
+
+  data:
+    redis:
+      host: ${WISEPEN_REDIS_HOST:${WISEPEN_INFRA_HOST:localhost}}
+      port: ${WISEPEN_REDIS_PORT:6379}
+      password: ${WISEPEN_REDIS_PASSWORD:root}
+      database: 0
+
+  mail:
+    host: ${WISEPEN_MAIL_HOST:}
+    port: ${WISEPEN_MAIL_PORT:465}
+    username: ${WISEPEN_MAIL_USERNAME:}
+    password: ${WISEPEN_MAIL_PASSWORD:}
+    default-encoding: UTF-8
+    properties:
+      mail:
+        debug: true
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: false
+            port: ${WISEPEN_MAIL_PORT:465}
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+springdoc:
+  api-docs.enabled: true
+  swagger-ui.enabled: true
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

@@ -1,0 +1,5 @@
+# 由 scripts/envs/init-envs.sh 生成的各微服务/前端 .env 归档
+# 包含真实凭证；永远不要提交
+*.env
+!.gitkeep
+!.gitignore
