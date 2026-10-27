@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest-tmp/
+.venv/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+
+# Collected user data
+data/*
+!data/.gitkeep
+
+# Local settings
+.env
+.idea/
+.vscode/

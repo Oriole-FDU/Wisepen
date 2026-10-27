@@ -1,0 +1,9 @@
+.git
+.gitignore
+**/__pycache__
+**/.pytest_cache
+**/.venv
+frontend/node_modules
+frontend/dist
+data/*
+!data/.gitkeep
