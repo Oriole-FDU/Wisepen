@@ -1,0 +1,31 @@
+security:
+  from-source-secret: null
+
+rpc:
+  lb-strategy: weighted_random
+  default-timeout-seconds: 5.0
+  default-retries: 2
+
+service-discovery:
+  cache-ttl-seconds: 30.0
+
+web-search:
+  timeout-seconds: 15.0
+  providers:
+    fourget:
+      base-url: http://127.0.0.1:8088
+    exa:
+      base-url: https://api.exa.ai
+    tavily:
+      base-url: https://api.tavily.com
+    anysearch:
+      base-url: https://api.anysearch.com
+    baidu-qianfan:
+      base-url: https://qianfan.baidubce.com
+    tinyfish:
+      base-url: https://api.search.tinyfish.ai
+    firecrawl:
+      base-url: https://api.firecrawl.dev
+  reranker:
+    zero-entropy-api-key: null
+    model: zerank-2

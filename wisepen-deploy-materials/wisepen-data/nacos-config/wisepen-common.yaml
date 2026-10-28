@@ -1,0 +1,58 @@
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+spring:
+  data:
+    redis:
+      host: null
+      port: null
+      password: null
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 10
+          min-idle: 0
+          max-wait: 2000ms
+  kafka:
+    bootstrap-servers: null
+    producer:
+      retries: 3
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        max.request.size: 10485760
+    consumer:
+      auto-offset-reset: earliest
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "*"
+        fetch.max.bytes: 10485760
+        max.partition.fetch.bytes: 10485760
+
+springwolf:
+  enabled: null
+  docket:
+    default-content-type: application/json
+    servers:
+      kafka:
+        protocol: kafka
+        host: null
+  plugin:
+    kafka:
+      scanner:
+        kafka-listener:
+          enabled: false
+
+springdoc:
+  api-docs.enabled: null
+
+wisepen:
+  security:
+    allow-unidentified: false
+    from-source: null

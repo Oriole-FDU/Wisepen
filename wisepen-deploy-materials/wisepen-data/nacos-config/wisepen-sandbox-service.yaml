@@ -1,0 +1,65 @@
+security:
+  from-source-secret: null
+
+persistence:
+  redis:
+    url: null
+  mongodb:
+    url: null
+    database: wisepen_sandbox
+
+provider:
+  active-id: AIO
+  settings:
+    AIO:
+      image: enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:1.11.0
+      request-timeout-seconds: 5.0
+      file-transfer-timeout-seconds: 120.0
+
+pool:
+  target-ready: 5
+  ready-max-age-seconds: 21600
+  warmup:
+    timeout-seconds: 120
+    max-retries: 3
+  destroy:
+    timeout-seconds: 30
+  watcher-interval-seconds: 10
+  idle-timeout-seconds: 1800
+
+docker:
+  seccomp-profile: unconfined
+  shm-size: 2g
+
+resource-protection:
+  host-container-storage-path: /var/lib/containerd
+  probe-image: busybox:1.37
+  cpu:
+    sample-seconds: 1.0
+    high-watermark-percent: 90.0
+    low-watermark-percent: 75.0
+  disk:
+    high-watermark-percent: 85.0
+    low-watermark-percent: 80.0
+    min-free-bytes: 53687091200
+
+command:
+  output-max-bytes: 65536
+
+file-transfer:
+  max-bytes: 104857600
+  spool-max-memory-bytes: 8388608
+  download-url-duration-seconds: 900
+  timeout-seconds: 120.0
+
+rpc:
+  lb-strategy: weighted_random
+  default-timeout-seconds: 5.0
+  default-retries: 2
+
+service-discovery:
+  cache-ttl-seconds: 30.0
+
+workspace:
+  container-root: ./data/workspaces
+  export-root: ./data/workspace-cache

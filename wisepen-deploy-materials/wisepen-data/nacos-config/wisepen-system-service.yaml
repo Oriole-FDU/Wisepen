@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: null
+    username: null
+    password: null
+  mail:
+    host: null
+    port: null
+    protocol: smtp
+    username: null
+    password: null
+    default-encoding: UTF-8
+    properties:
+      mail:
+        debug: false
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+wisepen:
+  batch-task:
+    execution:
+      batch-size: 20
+      stale-minutes: 30
+    schedule:
+      poll-delay-ms: 10000
+  system:
+    mail:
+      from-name: WisePen系统

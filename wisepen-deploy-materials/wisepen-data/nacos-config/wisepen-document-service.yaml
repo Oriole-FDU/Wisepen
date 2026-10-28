@@ -1,0 +1,48 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: null
+    username: null
+    password: null
+  data:
+    mongodb:
+      uri: null
+
+jodconverter:
+  local:
+    enabled: false
+  remote:
+    enabled: true
+    url: null
+
+wisepen:
+  document:
+    integration:
+      provider: onlyoffice
+      onlyoffice:
+        internal-url: null
+        callback-base-url: null
+        jwt-secret: null
+        jwt-header: Authorization
+        jwt-prefix: "Bearer "
+    conversion-runtime:
+      timeout-ms: 120000
+      poll-interval-ms: 1000
+      source-url-duration-seconds: 3600
+    download:
+      url-duration-seconds: 900
+    edit-session:
+      ttl-seconds: 86400
+    watermark:
+      secret-key: null
+      fonts:
+        regular-path: ""
+        bold-path: ""
+    local-resources:
+      cache-path: /tmp/wisepen/document/cache/
+    upload-timeout:
+      base-timeout-ms: 600000
+      assumed-speed-bps: 102400
+      max-timeout-ms: 3600000
+    stale-check:
+      delay-ms: 300000

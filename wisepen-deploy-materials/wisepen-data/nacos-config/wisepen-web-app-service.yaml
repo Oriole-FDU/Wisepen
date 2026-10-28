@@ -1,0 +1,9 @@
+spring:
+  data:
+    mongodb:
+      uri: null
+
+wisepen:
+  web-app:
+    single-html-page:
+      max-content-bytes: 2097152

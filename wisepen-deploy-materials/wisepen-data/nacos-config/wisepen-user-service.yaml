@@ -1,0 +1,53 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: null
+    username: null
+    password: null
+
+wisepen:
+  user:
+    endpoint:
+      api-domain: null
+      auth-cookie-domain: null
+    admin-password:
+      default-password: null
+    message-dedup:
+      window-minutes: 60
+    ai-debt:
+      hard-limit-tokens: 10000
+    dashboard-aggregate:
+      cron: "0 */10 * * * ?"
+  campus-identity:
+    providers:
+      FUDAN_UIS:
+        enabled: true
+    routing:
+      FUDAN_UIS:
+        service-name: wisepen-fudan-extension-service
+  user-task:
+    rules:
+      ONBOARDING_TUTORIAL:
+        enabled: true
+      STUDENT_VERIFICATION:
+        enabled: true
+        reward-type: TOKEN
+        reward-amount: 5000000
+      TEACHER_VERIFICATION:
+        enabled: true
+        reward-type: TOKEN
+        reward-amount: 100000000
+    daily-check-in:
+      enabled: true
+      reward-type: TOKEN
+      min-reward-amount: 100000
+      max-reward-amount: 1000000
+      reward-step-amount: 100000
+      refresh-cycle-days: 1
+      guarantee-cycle-count: 10
+    invite-verified-user:
+      enabled: true
+      reward-type: TOKEN
+      min-reward-amount: 1000000
+      max-reward-amount: 10000000
+      reward-step-amount: 1000000

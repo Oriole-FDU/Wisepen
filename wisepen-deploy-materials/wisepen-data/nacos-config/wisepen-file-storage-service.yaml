@@ -1,0 +1,34 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: null
+    username: null
+    password: null
+
+wisepen:
+  storage:
+    upload:
+      default-ticket-duration: 900
+      max-small-file-size: 5242880
+      uploading-timeout-hours: 2
+    retention:
+      deleted-retention-days: 30
+    endpoint:
+      api-domain: null
+    providers:
+      primary-code: primary
+      items:
+        primary:
+          name: 主存储
+          provider: ALIYUN_OSS
+          region: null
+          endpoint: null
+          access-key-id: null
+          access-key-secret: null
+          bucket-name: null
+          domain: null
+          role-arn: null
+          enabled: true
+    cleanup:
+      zombie-cron: "0 0 */2 * * ?"
+      physical-gc-cron: "0 0 3 * * ?"

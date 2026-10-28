@@ -1,0 +1,103 @@
+security:
+  from-source-secret: null
+
+persistence:
+  redis:
+    url: null
+  mongodb:
+    url: null
+    database: wisepen_chat
+  qdrant:
+    host: null
+    port: 6333
+    api-key: null
+
+messaging:
+  kafka:
+    bootstrap-servers: null
+
+models:
+  fallback:
+    base-url: null
+    api-key: null
+    default-model-id: null
+  memory:
+    llm-model: null
+    embedding-model: null
+    reranker-model: null
+  summary:
+    model: null
+  reranker:
+    model: null
+
+integrations:
+  zero-entropy:
+    api-key: null
+  speech: null
+
+billing:
+  student-service-fee-rate: 0.10
+  teacher-service-fee-rate: 0.50
+
+context:
+  token-limit: 128000
+  default-output-reserve-tokens: 4096
+  min-prompt-budget-tokens: 1024
+  compression:
+    high-watermark-ratio: 0.8
+    low-watermark-ratio: 0.5
+  fallback-history-limit: 20
+  long-term-memory:
+    limit: 10
+    threshold: 0.6
+
+vision:
+  max-image-count: 10
+  max-image-bytes: 5242880
+  max-total-image-bytes: 12582912
+  enable-history-image-auto-load: true
+  history-image-turn-limit: 5
+
+agent:
+  max-iterations: 25
+
+chat-turn:
+  active-ttl-seconds: 1800
+  stream-ttl-seconds: 3600
+
+tools:
+  result-max-chars: 4000
+  content:
+    preview-per-char-budget: 4000
+    preview-total-char-budget: 12000
+    read-window-char-budget: 24000
+    read-total-char-budget: 48000
+    semantic-search-window-char-budget: 4000
+    semantic-search-total-char-budget: 24000
+    regex-context-side-char-budget: 1500
+    regex-total-char-budget: 24000
+    default-ttl-seconds: 3600
+    max-chars: 20000000
+
+skills:
+  match-top-k: 20
+
+mcp:
+  system-list-tools-cache-ttl-seconds: 60.0
+  user-list-tools-cache-ttl-seconds: 60.0
+  default-timeout-seconds: 15.0
+  max-user-servers: 10
+  max-tools-per-server: 50
+
+rpc:
+  lb-strategy: weighted_random
+  default-timeout-seconds: 5.0
+  default-retries: 2
+
+service-discovery:
+  cache-ttl-seconds: 30.0
+
+asset-cache:
+  directory: /var/oss_cache
+  ttl-seconds: 21600
+  gc-interval-seconds: 1800

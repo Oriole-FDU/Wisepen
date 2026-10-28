@@ -1,0 +1,19 @@
+spring:
+  data:
+    mongodb:
+      uri: null
+  elasticsearch:
+    uris: null
+    username: null
+    password: null
+
+wisepen:
+  resource:
+    retention:
+      deleted-retention-days: 30
+    cleanup:
+      physical-gc-cron: "0 0 3 * * ?"
+    read-count:
+      dedup-ttl-minutes: 10
+    dashboard-cache:
+      metric-ttl-days: 3

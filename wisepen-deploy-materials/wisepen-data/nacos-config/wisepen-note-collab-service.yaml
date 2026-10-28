@@ -1,0 +1,7 @@
+kafka:
+  brokers: null
+
+collab:
+  max-delta-versions-before-full: 9
+  snapshot-flush-interval-ms: 5000
+  room-idle-destroy-delay-ms: 30000
