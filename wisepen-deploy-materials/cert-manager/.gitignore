@@ -1,0 +1,5 @@
+.env
+env/*.env
+!env/*.env.example
+data/
+acme-data/

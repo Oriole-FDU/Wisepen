@@ -1,0 +1,25 @@
+services:
+  # 首次启动签发或加载证书，之后由 cron 自动续期
+  cert-manager:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: wisepen-cert-manager
+    restart: unless-stopped
+    # 该文件由 Deploy Kit 生成
+    # 手工部署时需自行从 cert-manager.env.example 复制填写
+    env_file:
+      - ../env/cert-manager.env
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    volumes:
+      # 此目录保存 ACME 账号私钥、订单、证书配置和导出证书
+      # 容器重建后继续复用
+      - ${CERT_MANAGER_DATA_DIR:?请填写 CERT_MANAGER_DATA_DIR}:/acme.sh
+    networks:
+      - wisepen-net
+
+networks:
+  wisepen-net:
+    external: true
+    name: ${WISEPEN_NETWORK_NAME:-wisepen-net}
