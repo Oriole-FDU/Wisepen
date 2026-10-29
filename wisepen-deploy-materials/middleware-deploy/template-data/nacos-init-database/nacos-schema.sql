@@ -1,12 +1,8 @@
 -- =============================================================================
--- 00-nacos-schema.sql
+-- nacos-schema.sql
 -- -----------------------------------------------------------------------------
 -- Nacos v2.3.2 (Apache-2.0) 数据库 schema，来自官方发行包 conf/mysql-schema.sql
--- MySQL 容器首次启动时由 docker-entrypoint-initdb.d 执行；之后会被 Nacos
--- 自身的 datasource 复用
 -- =============================================================================
-CREATE DATABASE IF NOT EXISTS nacos DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
-USE nacos;
 /*
  * Copyright 1999-2018 Alibaba Group Holding Ltd.
  *
@@ -217,6 +213,8 @@ CREATE TABLE `permissions` (
     UNIQUE INDEX `uk_role_permission` (`role`,`resource`,`action`) USING BTREE
 );
 
-INSERT INTO users (username, password, enabled) VALUES ('nacos', '$2a$10$EuWPZHzz32dJN7jexM34MOeYirDdFAZm2kuWj7VEOJhhZkDrxfvUu', TRUE);
+-- INSERT INTO users (username, password, enabled) VALUES ('nacos', '$2a$10$EuWPZHzz32dJN7jexM34MOeYirDdFAZm2kuWj7VEOJhhZkDrxfvUu', TRUE);
 
-INSERT INTO roles (username, role) VALUES ('nacos', 'ROLE_ADMIN');
+--INSERT INTO roles (username, role) VALUES ('nacos', 'ROLE_ADMIN');
+
+-- Nacos 登录用户和管理员角色由 initialize-nacos-database.sh 根据 ENV 幂等写入

@@ -1,0 +1,24 @@
+services:
+  onlyoffice-documentserver:
+    image: onlyoffice/documentserver:9.4.0
+    container_name: onlyoffice-documentserver
+    restart: always
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      JWT_ENABLED: "true"
+      JWT_SECRET: ${ONLYOFFICE_JWT_SECRET:?请填写 ONLYOFFICE_JWT_SECRET}
+      JWT_HEADER: Authorization
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${ONLYOFFICE_HOST_PORT:-8101}:80"
+    volumes:
+      - ${MIDDLEWARE_DATA_DIR:-../data}/onlyoffice/logs:/var/log/onlyoffice
+      - ${MIDDLEWARE_DATA_DIR:-../data}/onlyoffice/data:/var/www/onlyoffice/Data
+      - ${CUSTOM_FONTS_DIR:-../data/fonts}:/usr/share/fonts/truetype/custom:ro
+      - ${MIDDLEWARE_DATA_DIR:-../data}/onlyoffice/cache:/var/lib/onlyoffice
+    networks:
+      - wisepen-net
+
+networks:
+  wisepen-net:
+    external: true
+    name: ${WISEPEN_NETWORK_NAME:-wisepen-net}

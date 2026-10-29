@@ -1,0 +1,86 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.153.0
+    container_name: otel-collector
+    restart: always
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ../conf/observability/otel-collector.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${OTEL_GRPC_HOST_PORT:-4317}:4317"
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${OTEL_HTTP_HOST_PORT:-4318}:4318"
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${OTEL_PROMETHEUS_HOST_PORT:-8889}:8889"
+    networks:
+      - wisepen-net
+
+  tempo:
+    image: grafana/tempo:2.10.5
+    container_name: tempo
+    restart: always
+    command: ["-config.file=/etc/tempo.yaml"]
+    mem_limit: 4g
+    volumes:
+      - ../conf/observability/tempo.yaml:/etc/tempo.yaml:ro
+      - ${MIDDLEWARE_DATA_DIR:-../data}/tempo:/tmp/tempo
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${TEMPO_HTTP_HOST_PORT:-3200}:3200"
+    networks:
+      - wisepen-net
+
+  loki:
+    image: grafana/loki:3.7.3
+    container_name: loki
+    restart: always
+    command: -config.file=/etc/loki/local-config.yaml
+    mem_limit: 4g
+    volumes:
+      - ../conf/observability/loki.yaml:/etc/loki/local-config.yaml:ro
+      - ${MIDDLEWARE_DATA_DIR:-../data}/loki:/tmp/loki
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${LOKI_HTTP_HOST_PORT:-3100}:3100"
+    networks:
+      - wisepen-net
+
+  prometheus:
+    image: prom/prometheus:v3.13.1
+    container_name: prometheus
+    restart: always
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+      - --web.enable-remote-write-receiver
+    mem_limit: 4g
+    volumes:
+      - ../conf/observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ${MIDDLEWARE_DATA_DIR:-../data}/prometheus:/prometheus
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${PROMETHEUS_HTTP_HOST_PORT:-9090}:9090"
+    networks:
+      - wisepen-net
+
+  grafana:
+    image: grafana/grafana:13.1.1
+    container_name: grafana
+    restart: always
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?请填写 GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_DEFAULT_THEME: light
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${GRAFANA_HTTP_HOST_PORT:-3000}:3000"
+    volumes:
+      - ${MIDDLEWARE_DATA_DIR:-../data}/grafana:/var/lib/grafana
+      - ../conf/observability/grafana-datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+    networks:
+      - wisepen-net
+
+networks:
+  wisepen-net:
+    external: true
+    name: ${WISEPEN_NETWORK_NAME:-wisepen-net}

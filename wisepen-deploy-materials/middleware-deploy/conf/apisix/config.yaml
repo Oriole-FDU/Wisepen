@@ -1,0 +1,80 @@
+# config.yaml
+apisix:
+  node_listen: 9080              # HTTP 监听端口
+  enable_ipv6: false
+
+  custom_lua_shared_dict:
+    session_cache: 10m   # 划拨 10MB 内存给网关做极速 Session 缓存
+
+deployment:
+  role: traditional
+  role_traditional:
+    config_provider: etcd
+  
+  etcd:
+    host:
+      - "http://etcd:2379"       # 连接 docker 内的 etcd
+    prefix: "/apisix"
+    user: "${{ETCD_ROOT_USERNAME}}"
+    password: "${{ETCD_ROOT_PASSWORD}}"
+    timeout: 30
+  
+  admin:
+    allow_admin:
+      - 0.0.0.0/0     # 允许所有 IP 访问 Admin API (仅限开发环境！)
+    admin_key:
+      - name: "admin"
+        key: "${{APISIX_ADMIN_KEY}}"
+        role: admin
+
+discovery:
+  nacos:
+    host:
+      - "http://${{NACOS_USERNAME}}:${{NACOS_PASSWORD}}@nacos:8848"      # 连接 docker 内的 Nacos
+    prefix: "/nacos/v1/"
+    fetch_interval: 1            # 拉取间隔(秒)
+    weight: 100
+    timeout:
+      connect: 2000
+      send: 2000
+      read: 5000
+
+plugins:
+  - limit-count
+  # - limit-req
+  # - limit-conn
+  # - fault-injection
+  - cors
+  # - ip-restriction
+  # - referer-restriction
+  # - uri-blocker
+  # - request-id
+  # - wolf-rbac
+  # - key-auth
+  # - basic-auth
+  - prometheus
+  - opentelemetry
+  - serverless-pre-function
+  - serverless-post-function
+  - proxy-rewrite
+  # - workflow
+  # - api-breaker
+  - response-rewrite
+
+plugin_attr:
+  # 配置 Prometheus 指标暴露
+  prometheus:
+    export_uri: /apisix/prometheus/metrics
+    enable_export_server: true
+    export_addr:
+      ip: 0.0.0.0
+      port: 9091     # APISIX 默认在这个端口暴露指标
+
+  # 配置 OpenTelemetry (发送 Trace 给 OTel Collector)
+  opentelemetry:
+    trace_id_source: x-request-id
+    resource:
+      service.name: APISIX-Gateway # 在 Tempo/Grafana 里显示的服务名
+    collector:
+      address: otel-collector:4318 # 指向你的 OTel 容器 (HTTP协议)
+      request_timeout: 5

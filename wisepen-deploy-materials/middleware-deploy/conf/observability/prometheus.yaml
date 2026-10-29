@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'otel-collector'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['otel-collector:8889']
+
+  # 抓取 APISIX 的指标
+  - job_name: 'apisix'
+    scrape_interval: 15s
+    metrics_path: '/apisix/prometheus/metrics'
+    static_configs:
+      - targets: ['apisix:9091']

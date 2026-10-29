@@ -1,0 +1,74 @@
+services:
+  apisix-dashboard:
+    image: apache/apisix-dashboard:3.0.1-alpine
+    container_name: apisix-dashboard
+    restart: always
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${APISIX_DASHBOARD_HOST_PORT:-9000}:9000"
+    volumes:
+      - ../conf/apisix-dashboard/conf.yaml:/tmp/conf.yaml:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        sed -e 's|$${ETCD_ROOT_USERNAME}|${ETCD_ROOT_USERNAME:-root}|g' \
+            -e 's|$${ETCD_ROOT_PASSWORD}|${ETCD_ROOT_PASSWORD}|g' \
+            -e 's|$${APISIX_DASHBOARD_USER}|${APISIX_DASHBOARD_USER}|g' \
+            -e 's|$${APISIX_DASHBOARD_PASSWORD}|${APISIX_DASHBOARD_PASSWORD}|g' \
+            -e 's|$${APISIX_DASHBOARD_SECRET}|${APISIX_DASHBOARD_SECRET}|g' \
+            /tmp/conf.yaml > /usr/local/apisix-dashboard/conf/conf.yaml
+        exec /usr/local/apisix-dashboard/manager-api -p /usr/local/apisix-dashboard/
+    networks:
+      - wisepen-net
+
+  kibana:
+    image: kibana:8.19.18
+    container_name: kibana
+    restart: always
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${KIBANA_HTTP_HOST_PORT:-5601}:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      TZ: ${TZ:-Asia/Shanghai}
+      ELASTICSEARCH_USERNAME: elastic
+      ELASTICSEARCH_PASSWORD: ${ES_ELASTIC_PASSWORD:?请填写 ES_ELASTIC_PASSWORD}
+    networks:
+      - wisepen-net
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: kafka-ui
+    restart: always
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${KAFKA_UI_HOST_PORT:-9091}:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: wisepen-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      TZ: ${TZ:-Asia/Shanghai}
+      AUTH_TYPE: LOGIN_FORM
+      SPRING_SECURITY_USER_NAME: ${KAFKA_UI_USER:?请填写 KAFKA_UI_USER}
+      SPRING_SECURITY_USER_PASSWORD: ${KAFKA_UI_PASSWORD:?请填写 KAFKA_UI_PASSWORD}
+    networks:
+      - wisepen-net
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: always
+    user: root
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${JENKINS_HTTP_HOST_PORT:-8080}:8080"
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${JENKINS_AGENT_HOST_PORT:-50000}:50000"
+    volumes:
+      - ${MIDDLEWARE_DATA_DIR:-../data}/jenkins:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker:ro
+    networks:
+      - wisepen-net
+
+networks:
+  wisepen-net:
+    external: true
+    name: ${WISEPEN_NETWORK_NAME:-wisepen-net}

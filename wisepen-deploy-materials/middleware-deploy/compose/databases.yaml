@@ -1,0 +1,88 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请填写 MYSQL_ROOT_PASSWORD}
+      TZ: ${TZ:-Asia/Shanghai}
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${MYSQL_HOST_PORT:-3306}:3306"
+    volumes:
+      - ${MIDDLEWARE_DATA_DIR:-../data}/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysqladmin ping -h 127.0.0.1 -uroot --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - wisepen-net
+
+  redis:
+    image: redis:8.8.1-alpine
+    container_name: redis
+    restart: always
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    command: redis-server --requirepass "${REDIS_PASSWORD:?请填写 REDIS_PASSWORD}" --appendonly yes
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - ${MIDDLEWARE_DATA_DIR:-../data}/redis:/data
+    networks:
+      - wisepen-net
+
+  mongo:
+    image: mongo:6.0.28
+    container_name: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?请填写 MONGO_ROOT_PASSWORD}
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${MONGO_HOST_PORT:-27017}:27017"
+    volumes:
+      - ${MIDDLEWARE_DATA_DIR:-../data}/mongo:/data/db
+    networks:
+      - wisepen-net
+
+  elasticsearch:
+    image: elasticsearch:8.19.18
+    container_name: elasticsearch
+    restart: always
+    mem_limit: 4g
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: -Xms2g -Xmx2g
+      TZ: ${TZ:-Asia/Shanghai}
+      xpack.security.enabled: "true"
+      ELASTIC_PASSWORD: ${ES_ELASTIC_PASSWORD:?请填写 ES_ELASTIC_PASSWORD}
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${ELASTICSEARCH_HTTP_HOST_PORT:-9200}:9200"
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${ELASTICSEARCH_TRANSPORT_HOST_PORT:-9300}:9300"
+    volumes:
+      - ${MIDDLEWARE_DATA_DIR:-../data}/elasticsearch/data:/usr/share/elasticsearch/data
+      - ${MIDDLEWARE_DATA_DIR:-../data}/elasticsearch/plugins:/usr/share/elasticsearch/plugins
+    networks:
+      - wisepen-net
+
+  qdrant:
+    image: qdrant/qdrant:v1.18.3
+    container_name: qdrant
+    restart: always
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?请填写 QDRANT_API_KEY}
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${QDRANT_HTTP_HOST_PORT:-6333}:6333"
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${QDRANT_GRPC_HOST_PORT:-6334}:6334"
+    volumes:
+      - ${MIDDLEWARE_DATA_DIR:-../data}/qdrant:/qdrant/storage
+    networks:
+      - wisepen-net
+
+networks:
+  wisepen-net:
+    external: true
+    name: ${WISEPEN_NETWORK_NAME:-wisepen-net}

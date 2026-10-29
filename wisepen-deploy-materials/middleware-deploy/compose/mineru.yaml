@@ -1,0 +1,49 @@
+services:
+  mineru-api-gpu:
+    image: ${MINERU_IMAGE:?请填写 MINERU_IMAGE}
+    container_name: mineru-gpu
+    restart: unless-stopped
+    working_dir: /vllm-workspace
+    entrypoint:
+      - /bin/bash
+      - -c
+      - export MINERU_MODEL_SOURCE=local && exec "$@"
+      - --
+    command:
+      - mineru-api
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --enable-vlm-preload
+      - "true"
+      - --gpu-memory-utilization
+      - ${MINERU_GPU_MEMORY_UTILIZATION:-0.8}
+    environment:
+      CUDA_VISIBLE_DEVICES: ${MINERU_GPU_DEVICE_ID:-0}
+      MINERU_MODEL_SOURCE: local
+      MINERU_API_OUTPUT_ROOT: /data/output
+      MINERU_API_MAX_CONCURRENT_REQUESTS: ${MINERU_MAX_CONCURRENT_REQUESTS:-1}
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    ports:
+      - "${MIDDLEWARE_BIND_HOST:-127.0.0.1}:${MINERU_HOST_PORT:-8000}:8000"
+    volumes:
+      - ${MINERU_OUTPUT_DIR:-../data/mineru/output}:/data/output
+      - ${MINERU_MODEL_DIR:?请填写 MINERU_MODEL_DIR}:/root/.cache/modelscope/hub:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids:
+                - ${MINERU_GPU_DEVICE_ID:-0}
+              capabilities:
+                - gpu
+    networks:
+      - wisepen-net
+
+networks:
+  wisepen-net:
+    external: true
+    name: ${WISEPEN_NETWORK_NAME:-wisepen-net}
